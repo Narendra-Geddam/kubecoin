@@ -1,12 +1,12 @@
 [submodule "kubecoin-infra"]
 	path = kubecoin-infra
 	url = https://github.com/Narendra-Geddam/Kubernetes-Cluster.git
-[submodule "kubecoin-project"]
-	path = kubecoin-project
-	url = https://github.com/artisantek/kubecoin-project.git
 [submodule "kubecoin-backend/backend"]
 	path = kubecoin-backend/backend
 	url = https://github.com/Narendra-Geddam/kubecoin-backend-ms.git
 [submodule "kubecoin-frontend/frontend"]
 	path = kubecoin-frontend/frontend
 	url = https://github.com/Narendra-Geddam/kubecoin-frontend-ms.git
+[submodule "kubecoin-project"]
+	path = kubecoin-project
+	url = https://github.com/devops25NG/kubecoin.git
