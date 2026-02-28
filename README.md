@@ -37,6 +37,10 @@ This parent repository tracks multiple submodules for the full KubeCoin lifecycl
 | `kubecoin-infra` | AWS infra and K8s bootstrap automation |
 | `kubecoin-helm-charts` | Helm chart and plain study manifests |
 
+## Demo Preview
+
+![KubeCoin Demo](L1.gif)
+
 ## Submodule Commands
 
 ```bash
