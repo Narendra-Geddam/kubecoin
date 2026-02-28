@@ -10,3 +10,6 @@
 [submodule "kubecoin-frontend"]
 	path = kubecoin-frontend
 	url = https://github.com/Narendra-Geddam/kubecoin-frontend-ms.git
+[submodule "kubecoin-helm-charts"]
+	path = kubecoin-helm-charts
+	url = https://github.com/Narendra-Geddam/kubecoin-helm.git
