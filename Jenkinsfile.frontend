@@ -1,0 +1,94 @@
+pipeline {
+    agent { label 'docker-host' }
+
+    environment {
+        DOCKER_CREDENTIALS = 'docker-creds'
+        GIT_CREDENTIALS = 'git-creds'
+        DOCKER_REGISTRY = 'your-private-registry.example.com'
+        IMAGE_NAME = 'kubecoin-frontend'
+        IMAGE_REPOSITORY = "${DOCKER_REGISTRY}/${IMAGE_NAME}"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        IMAGE_FULL = "${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+        IMAGE_LATEST = "${IMAGE_REPOSITORY}:latest"
+        HELM_VALUES_FILE = 'kubecoin-helm-charts/kubecoin/values.yaml'
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                dir('kubecoin-frontend') {
+                    sh 'docker build -t ${IMAGE_FULL} -t ${IMAGE_LATEST} .'
+                }
+            }
+        }
+
+        stage('Login to Registry') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: DOCKER_CREDENTIALS,
+                    usernameVariable: 'DOCKER_USERNAME',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    sh 'echo "$DOCKER_PASSWORD" | docker login ${DOCKER_REGISTRY} -u "$DOCKER_USERNAME" --password-stdin'
+                }
+            }
+        }
+
+        stage('Push Images') {
+            steps {
+                sh '''
+                    docker push ${IMAGE_FULL}
+                    docker push ${IMAGE_LATEST}
+                '''
+            }
+        }
+
+        stage('Update Helm Image And Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: GIT_CREDENTIALS,
+                    usernameVariable: 'GIT_USERNAME',
+                    passwordVariable: 'GIT_PASSWORD'
+                )]) {
+                    sh '''
+                        set -e
+
+                        sed -i '/^frontend:/,/^[^ ]/ s|^\(    repository: \).*|\1'"${IMAGE_REPOSITORY}"'|' ${HELM_VALUES_FILE}
+                        sed -i '/^frontend:/,/^[^ ]/ s|^\(    tag: \).*|\1"'"${IMAGE_TAG}"'"|' ${HELM_VALUES_FILE}
+
+                        git config user.name "jenkins"
+                        git config user.email "jenkins@local"
+                        git add ${HELM_VALUES_FILE}
+
+                        if git diff --cached --quiet; then
+                          echo "No Helm image changes to commit."
+                          exit 0
+                        fi
+
+                        git commit -m "ci(frontend): update helm image to ${IMAGE_TAG}"
+
+                        REMOTE_URL=$(git config --get remote.origin.url)
+                        CLEAN_URL=${REMOTE_URL#https://}
+                        git push https://${GIT_USERNAME}:${GIT_PASSWORD}@${CLEAN_URL} HEAD:${BRANCH_NAME}
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout ${DOCKER_REGISTRY} || true'
+        }
+    }
+}
