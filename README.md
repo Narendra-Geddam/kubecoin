@@ -60,3 +60,9 @@ git submodule foreach --recursive git status
 - Each submodule has its own git history and remote.
 - Commit and push inside each submodule when changing that module.
 - This parent repo only tracks submodule pointers.
+
+## CI/CD Note
+
+- Jenkins pipelines build and push Docker images using the Jenkins credential `docker-creds`.
+- Helm image values are updated from CI and pushed back to Git using `git-creds`.
+- Image updates target `kubecoin-helm-charts/kubecoin/values.yaml`.
